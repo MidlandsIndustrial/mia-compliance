@@ -1670,18 +1670,6 @@ function deleteLift(id){
   });
 }
 
-// ── BUILDING DOCUMENT UPLOAD ───────────────────────────────
-var _bldUploadCtx=null;
-function openBldDocUpload(assetType,assetId,label){
-  _bldUploadCtx={assetType:assetType,assetId:assetId};
-  document.getElementById('umUploadTitle').textContent='Upload — '+label;
-  document.getElementById('umUploadFile').value='';
-  document.getElementById('umUploadInspDate').value='';
-  document.getElementById('umUploadNextDue').value='';
-  document.getElementById('umUploadResult').value='Pass';
-  document.getElementById('uploadModal').classList.add('open');
-}
-
 // ── OVERRIDE openBuilding to render new tabs ───────────────
 (function init(){
   if(!SB_URL||!SB_KEY){document.getElementById('loginWrap').style.display='none';document.getElementById('setupWrap').style.display='flex';return;}
