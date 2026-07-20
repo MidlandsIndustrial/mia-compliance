@@ -1080,15 +1080,23 @@ function confirmUpload(){
       var row=Array.isArray(d)?d[0]:d;
       if(row&&row.id){if(!bldDocs[assetId])bldDocs[assetId]=[];bldDocs[assetId].push(row);}
       // Also update dates/result on the asset record if provided
-      var updates={};if(inspDate)updates.last_inspection_date=inspDate;if(nextDue)updates.next_due_date=nextDue;if(result)updates.result=result;
+      var tbl=ctx.assetType;
+      var lastDateField=(tbl==='building_inspections')?'last_date':'last_inspection_date';
+      var updates={};if(inspDate)updates[lastDateField]=inspDate;if(nextDue)updates.next_due_date=nextDue;if(result)updates.result=result;
       if(nextDue)updates.rag_status=computeRag(nextDue,'fire_door');
       if(Object.keys(updates).length>0){
-        var tbl=ctx.assetType;
         return sbPatch(tbl,updates,'id=eq.'+assetId).then(function(d2){
           var data=Array.isArray(d2)?d2[0]:d2;
           if(data&&data.id){
-            var arr=tbl==='building_fire_doors'?bldFireDoors:tbl==='electric_boards'?elecBoards:[];
-            var idx=arr.findIndex(function(x){return x.id===assetId;});if(idx>=0)arr[idx]=data;
+            if(tbl==='building_inspections'){
+              var bIdx=bldInspections.findIndex(function(x){return x.id===assetId;});
+              if(bIdx>=0)bldInspections[bIdx]=data;
+            } else {
+              var arr=tbl==='building_fire_doors'?bldFireDoors:tbl==='electric_boards'?elecBoards:[];
+              var idx=arr.findIndex(function(x){return x.id===assetId;});if(idx>=0)arr[idx]=data;
+            }
+          } else if(data&&data.message){
+            console.error('Upload date/result save failed:',data.message);
           }
         });
       }
@@ -1307,7 +1315,7 @@ var INSP_TYPES=[
   {code:'emergency_light', label:'Emergency Lighting',         freq:'Annual'},
   {code:'hs_weekly',       label:'H&S Checklist',              freq:'Weekly'},
   {code:'hs_quarterly',    label:'H&S Checklist',              freq:'Quarterly'},
-  {code:'hs_annual',       label:'H&S Checklist',              freq:'Annual'},
+  {code:'hs_annual',       label:'Unit Inspection',            freq:'Annual'},
   {code:'void_weekly',     label:'Void Inspection',            freq:'Weekly'},
   {code:'fire_evac',       label:'Fire Evacuation Drill',      freq:'6-Monthly'},
 ];
