@@ -1,0 +1,18 @@
+name: Supabase Keep-Alive
+
+on:
+  schedule:
+    # Runs every 3 days at 06:00 UTC — well inside Supabase's 7-day pause window
+    - cron: '0 6 */3 * *'
+  workflow_dispatch:
+    # Lets you trigger it manually from the Actions tab any time you want
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase project
+        run: |
+          curl -s -o /dev/null -w "Supabase ping response: %{http_code}\n" \
+            "https://bnmbzzzcznbkmevqhmld.supabase.co/auth/v1/health" \
+            -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJubWJ6enpjem5ia21ldnFobWxkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2NDc4NTAsImV4cCI6MjA5NzIyMzg1MH0.SCswtt4j_S1r59UnLnx8pbnMjmTLU2972-2Fdl_aXKQ"
