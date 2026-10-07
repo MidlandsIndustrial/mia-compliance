@@ -1,0 +1,618 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1F3A5F">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Door checks">
+<title>MIA door checks</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%231F3A5F'/%3E%3Crect x='20' y='12' width='24' height='40' rx='2' fill='none' stroke='%23C8963E' stroke-width='4'/%3E%3Ccircle cx='38' cy='33' r='3' fill='%23C8963E'/%3E%3C/svg%3E">
+<style>
+:root{
+  --ink:#17212B; --navy:#1F3A5F; --gold:#C8963E; --paper:#F4F5F2; --card:#FFFFFF; --line:#D5D9D3; --muted:#5B6672;
+  --pass:#1F7A4D; --pass-bg:#E3F2EA; --amber:#B86E00; --amber-bg:#FBEBD0; --fail:#B3261E; --fail-bg:#F9E0DE; --na:#6B7580; --na-bg:#E6E8E6;
+  --r:12px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;min-height:100vh}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+#app{max-width:640px;margin:0 auto;padding:0 0 calc(110px + env(safe-area-inset-bottom))}
+.bar{position:sticky;top:0;z-index:10;background:var(--navy);color:#fff;padding:calc(10px + env(safe-area-inset-top)) 14px 10px;display:flex;align-items:center;gap:10px;min-height:56px}
+.bar h1{font-size:18px;line-height:1.2;margin:0;flex:1;font-weight:750;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar .sub{font-size:12px;opacity:.8;font-weight:500;display:block}
+.bar button{background:transparent;border:1px solid rgba(255,255,255,.45);color:#fff;border-radius:10px;padding:8px 12px;min-height:40px;font-weight:600}
+.pad{padding:14px}
+.banner{margin:12px 14px 0;padding:12px 14px;border-radius:var(--r);background:var(--amber-bg);color:#5a3500;display:flex;gap:10px;align-items:center;justify-content:space-between;font-weight:600}
+.banner button{background:var(--amber);color:#fff;border:0;border-radius:10px;padding:10px 14px;font-weight:700;min-height:44px;white-space:nowrap}
+.banner.err{background:var(--fail-bg);color:#6e1410}
+.login{padding:28px 18px}
+.login h2{font-size:26px;margin:20px 0 4px}
+.login p{margin:0 0 18px;color:var(--muted)}
+label.f{display:block;font-weight:650;margin:14px 0 6px}
+input[type=text],input[type=email],input[type=password],input[type=search],select,textarea{width:100%;border:1.5px solid var(--line);border-radius:var(--r);background:#fff;padding:13px 14px;min-height:50px}
+textarea{min-height:104px;resize:vertical}
+.btn{display:block;width:100%;border:0;border-radius:var(--r);padding:15px;min-height:54px;font-weight:750;font-size:17px;background:var(--navy);color:#fff}
+.btn[disabled]{opacity:.6}
+.btn.ghost{background:#fff;color:var(--navy);border:1.5px solid var(--navy)}
+.err-text{color:var(--fail);font-weight:650;margin:10px 0 0}
+.progress{padding:14px 14px 4px;display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.progress b{font-size:22px}
+.progress span{color:var(--muted)}
+.track{height:8px;margin:6px 14px 0;background:var(--line);border-radius:99px;overflow:hidden}
+.track i{display:block;height:100%;background:var(--pass)}
+.tools{padding:12px 14px 6px;position:sticky;top:56px;z-index:5;background:var(--paper)}
+.chips{display:flex;gap:8px;margin-top:10px}
+.chip{flex:1;border:1.5px solid var(--line);background:#fff;border-radius:99px;padding:9px 6px;font-weight:650;min-height:42px}
+.chip[aria-pressed=true]{background:var(--navy);border-color:var(--navy);color:#fff}
+.list{padding:6px 14px;display:grid;gap:8px}
+.row{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--card);border:1.5px solid var(--line);border-radius:var(--r);padding:12px 14px;min-height:68px}
+.dot{width:14px;height:14px;border-radius:50%;flex:none;background:#B9BFB8}
+.dot.green{background:var(--pass)}.dot.amber{background:#E39A1B}.dot.red{background:var(--fail)}
+.row .main{flex:1;min-width:0}
+.row .ref{font-weight:800;font-size:18px}
+.row .loc{color:var(--muted);font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .st{font-size:13px;font-weight:650;text-align:right;color:var(--muted);flex:none;max-width:42%}
+.row .st.done{color:var(--pass)}.row .st.over{color:var(--fail)}
+.row.done{background:#F0F6F2}
+.empty{padding:34px 20px;text-align:center;color:var(--muted)}
+.door-head{padding:16px 14px 6px}
+.door-head .ref{font-size:28px;font-weight:850;line-height:1.1}
+.door-head .loc{color:var(--muted);margin-top:2px}
+.door-head .last{margin-top:8px;font-size:14px;color:var(--muted)}
+.quick{margin:10px 14px 4px}
+.quick button{width:100%;min-height:56px;border-radius:var(--r);border:2px solid var(--pass);background:var(--pass-bg);color:var(--pass);font-weight:800;font-size:17px}
+.checks{padding:6px 14px;display:grid;gap:8px}
+.check{background:var(--card);border:1.5px solid var(--line);border-radius:var(--r);padding:10px 12px}
+.check.missing{border-color:var(--fail);background:#FFF8F7}
+.check .name{font-weight:750;margin-bottom:8px}
+.seg{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.seg button{min-height:52px;border-radius:10px;border:1.5px solid var(--line);background:#fff;font-weight:750;font-size:16px}
+.seg button.pass[aria-pressed=true]{background:var(--pass);border-color:var(--pass);color:#fff}
+.seg button.fail[aria-pressed=true]{background:var(--fail);border-color:var(--fail);color:#fff}
+.seg button.na[aria-pressed=true]{background:var(--na);border-color:var(--na);color:#fff}
+.check input[type=text]{margin-top:0}
+.seg.two{grid-template-columns:1fr 1fr}
+.seg button.yn[aria-pressed=true]{background:var(--navy);border-color:var(--navy);color:#fff}
+.gapbox,.lbbox{margin-top:12px;padding-top:10px;border-top:1.5px solid var(--line)}
+.lbbox .seg{margin-top:6px}
+.hint{font-size:14px;color:var(--muted)}
+.gapgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
+.gl{display:block;font-weight:650;font-size:14px;margin-bottom:4px}
+.gin{font-size:18px;font-weight:700}
+input.gin.over{border:2px solid var(--fail);background:var(--fail-bg);color:#6e1410}
+.gnote{font-size:13px;font-weight:650;color:var(--fail);margin-top:4px;min-height:0}
+.tick{display:flex;align-items:center;gap:10px;min-height:44px;font-weight:650;margin-top:6px}
+.tick input{width:24px;height:24px;margin:0;flex:none}
+.sublabel{font-weight:650;margin:10px 0 6px}
+.lbfields{margin-top:4px}
+.section{padding:6px 14px}
+.section .f{margin-top:10px}
+select.res{font-weight:750}
+select.res.Pass{border-color:var(--pass);background:var(--pass-bg)}
+select.res.Remedials{border-color:#E39A1B;background:var(--amber-bg)}
+select.res.Fail{border-color:var(--fail);background:var(--fail-bg)}
+.photos{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.ph{position:relative;width:88px;height:88px;border-radius:10px;overflow:hidden;border:1.5px solid var(--line)}
+.ph img{width:100%;height:100%;object-fit:cover;display:block}
+.ph button{position:absolute;top:3px;right:3px;width:30px;height:30px;border-radius:50%;border:0;background:rgba(23,33,43,.8);color:#fff;font-size:18px;line-height:1;padding:0}
+.photo-btns{display:grid;grid-template-columns:1.4fr 1fr;gap:8px}
+.photo-btns .btn{min-height:56px;font-size:16px}
+.savebar{position:fixed;left:0;right:0;bottom:0;background:linear-gradient(to top,var(--paper) 78%,rgba(244,245,242,0));padding:18px 14px calc(14px + env(safe-area-inset-bottom));z-index:20}
+.savebar .in{max-width:612px;margin:0 auto}
+.savebar .err-text{margin:0 0 8px;text-align:center}
+.toast{position:fixed;left:14px;right:14px;bottom:calc(24px + env(safe-area-inset-bottom));max-width:612px;margin:0 auto;background:var(--ink);color:#fff;padding:14px 16px;border-radius:var(--r);font-weight:650;z-index:50;text-align:center}
+.bld{padding:14px;display:grid;gap:10px}
+.note{padding:14px;color:var(--muted);font-size:14px}
+@media (prefers-reduced-motion:no-preference){.track i{transition:width .3s}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<input id="cam" type="file" accept="image/*" capture="environment" hidden>
+<input id="gal" type="file" accept="image/*" multiple hidden>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(() => {
+'use strict';
+
+/* ---------- Settings ---------- */
+const SUPABASE_URL = 'https://bnmbzzzcznbkmevqhmld.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_kNK2LdsZoxW6ZUlnaHbO2A_8qraR0XF';
+const BUCKET = 'compliance-documents';
+const INTERVAL_MONTHS = 6;          // months until the next check is due after a saved inspection
+const MAX_PHOTOS = 10;
+const CHECKS = [
+  { key: 'cert',        label: '1. Cert' },
+  { key: 'gaps_seals',  label: '2. Gaps / seals' },
+  { key: 'ironmongery', label: '3. Ironmongery' },
+  { key: 'closers',     label: '4. Closers' },
+  { key: 'door_frame',  label: '5. Door / frame' },
+  { key: 'signage',     label: '6. Signage' },
+  { key: 'hold_back',   label: '7. Hold back devices' },
+];
+const RESULTS = ['Pass', 'Remedials Needed', 'Fail'];
+const LIM = { side: 4, bottom: 8, bottomSmoke: 3 };   // gap limits in mm (usual UK guidance)
+
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+  auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false },
+});
+const app = document.getElementById('app');
+
+const S = {
+  view: 'loading', session: null, profile: null, buildings: [], building: null, doors: [],
+  filter: 'todo', q: '', form: null, pending: 0, queueError: '', flushing: false,
+  doneIds: new Set(), toast: '', loginError: '', loginBusy: false, _v: null,
+};
+
+/* ---------- Small helpers ---------- */
+function h(tag, attrs = {}, ...kids) {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (v === null || v === undefined || v === false) continue;
+    if (k === 'class') el.className = v;
+    else if (k === 'on') { for (const [ev, fn] of Object.entries(v)) el.addEventListener(ev, fn); }
+    else if (k === 'value' || k === 'disabled' || k === 'checked' || k === 'selected') el[k] = v;
+    else el.setAttribute(k, v === true ? '' : v);
+  }
+  for (const kid of kids.flat()) {
+    if (kid === null || kid === undefined || kid === false) continue;
+    el.append(kid.nodeType ? kid : document.createTextNode(String(kid)));
+  }
+  return el;
+}
+const pad2 = n => String(n).padStart(2, '0');
+const dstr = d => d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+const todayStr = () => dstr(new Date());
+const fmtDate = s => {
+  if (!s) return '';
+  const [y, m, d] = s.split('-').map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+};
+const addMonths = (s, n) => { const [y, m, d] = s.split('-').map(Number); return dstr(new Date(y, m - 1 + n, d)); };
+const uuid = () => (crypto.randomUUID ? crypto.randomUUID()
+  : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 3 | 8)).toString(16); }));
+const ragFor = r => r === 'Pass' ? 'green' : r === 'Remedials Needed' ? 'amber' : 'red';
+const isNet = e => !navigator.onLine || /failed to fetch|fetch failed|networkerror|network request|load failed|timed? ?out|aborted/i.test((e && e.message) || String(e));
+const isAuthErr = e => !!e && (e.status === 401 || /jwt|not signed in/i.test(e.message || ''));
+const natural = (a, b) => String(a.door_reference).localeCompare(String(b.door_reference), undefined, { numeric: true, sensitivity: 'base' });
+const doneToday = d => S.doneIds.has(d.id) || d.last_inspection_date === todayStr();
+const canSubmit = () => S.profile && ['admin', 'compliance_team', 'building_manager'].includes(S.profile.role);
+
+let toastTimer;
+function toast(msg) {
+  S.toast = msg; render();
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { S.toast = ''; render(); }, 3500);
+}
+
+/* ---------- Offline queue (IndexedDB) ---------- */
+function idb() {
+  return new Promise((res, rej) => {
+    const r = indexedDB.open('mia-door-checks', 1);
+    r.onupgradeneeded = () => r.result.createObjectStore('queue', { keyPath: 'id' });
+    r.onsuccess = () => res(r.result);
+    r.onerror = () => rej(r.error);
+  });
+}
+async function qPut(rec) {
+  const db = await idb();
+  return new Promise((res, rej) => { const t = db.transaction('queue', 'readwrite'); t.objectStore('queue').put(rec); t.oncomplete = () => res(); t.onerror = () => rej(t.error); });
+}
+async function qAll() {
+  const db = await idb();
+  return new Promise((res, rej) => { const q = db.transaction('queue').objectStore('queue').getAll(); q.onsuccess = () => res(q.result || []); q.onerror = () => rej(q.error); });
+}
+async function qDel(id) {
+  const db = await idb();
+  return new Promise((res, rej) => { const t = db.transaction('queue', 'readwrite'); t.objectStore('queue').delete(id); t.oncomplete = () => res(); t.onerror = () => rej(t.error); });
+}
+async function refreshPending() {
+  try {
+    const mine = (await qAll()).filter(r => S.session && r.userId === S.session.user.id);
+    S.pending = mine.length;
+    S.queueError = (mine.find(r => r.error) || {}).error || '';
+  } catch (e) { S.pending = 0; }
+}
+
+/* ---------- Saving an inspection ---------- */
+async function processInspection(rec) {
+  const photos = [];
+  for (const p of rec.photos) {
+    const { error } = await sb.storage.from(BUCKET).upload(p.path, p.blob, { contentType: 'image/jpeg', upsert: false });
+    if (error && !/already exists|duplicate/i.test(error.message || '')) throw error;
+    photos.push({ path: p.path, item: null, caption: null });
+  }
+  const { error } = await sb.rpc('submit_door_inspection', {
+    p_inspection_id: rec.id, p_door_id: rec.doorId, p_result: rec.result, p_checks: rec.checks,
+    p_cf_no: rec.cfNo || null, p_comments: rec.comments || null, p_photos: photos, p_interval_months: INTERVAL_MONTHS,
+    p_gaps: rec.gaps || {}, p_letterbox: rec.letterbox || {},
+  });
+  if (error && error.code !== '23505') throw error;   // 23505 = already saved on an earlier attempt
+}
+function applyLocalResult(rec) {
+  const d = S.doors.find(x => x.id === rec.doorId);
+  if (d) {
+    d.last_inspection_date = rec.localDate; d.result = rec.result; d.rag_status = ragFor(rec.result);
+    d.next_due_date = addMonths(rec.localDate, INTERVAL_MONTHS);
+  }
+  S.doneIds.add(rec.doorId);
+}
+async function flushQueue() {
+  if (S.flushing || !S.session) return;
+  S.flushing = true; render();
+  let any = false;
+  try {
+    const mine = (await qAll()).filter(r => r.userId === S.session.user.id);
+    for (const rec of mine) {
+      try { await processInspection(rec); await qDel(rec.id); applyLocalResult(rec); any = true; }
+      catch (e) {
+        if (isNet(e) || isAuthErr(e)) break;
+        rec.error = (e && e.message) || 'Upload failed'; await qPut(rec);
+      }
+    }
+  } finally {
+    S.flushing = false; await refreshPending();
+    if (any && S.building) await loadDoors();
+    render();
+  }
+}
+
+/* ---------- Loading data ---------- */
+async function loadDoors() {
+  const { data, error } = await sb.from('building_fire_doors')
+    .select('id,door_reference,location,last_inspection_date,next_due_date,result,rag_status')
+    .eq('building_id', S.building.id);
+  if (error) { toast('Could not load doors. Check your signal and try again.'); return; }
+  const fresh = (data || []).sort(natural);
+  S.doors = fresh;
+}
+async function afterLogin() {
+  const uid = S.session.user.id;
+  const { data: p, error } = await sb.from('profiles').select('id,full_name,role,building_id').eq('id', uid).maybeSingle();
+  if (error || !p) { S.view = 'noprofile'; return; }
+  S.profile = p;
+  if (p.role === 'read_only') { S.view = 'readonly'; return; }
+  const { data: bs } = await sb.from('buildings').select('id,name').order('name');
+  S.buildings = bs || [];
+  await refreshPending();
+  if (p.role === 'building_manager') {
+    S.building = S.buildings.find(b => b.id === p.building_id) || null;
+    if (!S.building) { S.view = 'nobuilding'; return; }
+    await loadDoors(); S.view = 'doors';
+  } else {
+    S.view = 'buildings';
+  }
+  flushQueue();
+}
+async function signIn(email, password) {
+  S.loginBusy = true; S.loginError = ''; render();
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  S.loginBusy = false;
+  if (error) { S.loginError = /invalid/i.test(error.message) ? 'Wrong email or password.' : (isNet(error) ? 'No signal. Try again when you are connected.' : error.message); render(); return; }
+  S.session = data.session; await afterLogin(); render();
+}
+async function signOut() {
+  await sb.auth.signOut();
+  Object.assign(S, { session: null, profile: null, building: null, buildings: [], doors: [], form: null, view: 'login', doneIds: new Set(), pending: 0 });
+  render();
+}
+
+/* ---------- Photos ---------- */
+function compress(file) {
+  return new Promise((res, rej) => {
+    const url = URL.createObjectURL(file); const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const max = 1600, s = Math.min(1, max / Math.max(img.width, img.height));
+      const c = document.createElement('canvas'); c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      c.toBlob(b => b ? res(b) : rej(new Error('compress')), 'image/jpeg', 0.8);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('image')); };
+    img.src = url;
+  });
+}
+async function addPhotos(fileList) {
+  const f = S.form; if (!f) return;
+  for (const file of Array.from(fileList)) {
+    if (f.photos.length >= MAX_PHOTOS) { toast('Up to ' + MAX_PHOTOS + ' photos per check.'); break; }
+    let blob; try { blob = await compress(file); } catch (e) { blob = file; }
+    f.photos.push({ id: uuid(), blob, url: URL.createObjectURL(blob) });
+  }
+  render();
+}
+document.getElementById('cam').addEventListener('change', e => { addPhotos(e.target.files); e.target.value = ''; });
+document.getElementById('gal').addEventListener('change', e => { addPhotos(e.target.files); e.target.value = ''; });
+
+/* ---------- Form logic ---------- */
+function openForm(door) {
+  S.form = {
+    door, checks: {}, cfNo: '', result: '', resultTouched: false, comments: '', photos: [], tried: false, error: '', saving: false,
+    gaps: { head: '', hinge: '', latch: '', bottom: '', meeting: '', double: false, smoke: false, seals: '' },
+    letterbox: { fitted: false, rated: '', position: '', condition: '' },
+  };
+  S.view = 'form'; render();
+}
+function num(v) {
+  if (v === '' || v === null || v === undefined) return null;
+  const n = Number(String(v).replace(',', '.'));
+  return isFinite(n) && n >= 0 && n <= 50 ? n : NaN;
+}
+function gapLimit(f, key) { return key === 'bottom' ? (f.gaps.smoke ? LIM.bottomSmoke : LIM.bottom) : LIM.side; }
+function gapOver(f) {
+  const keys = ['head', 'hinge', 'latch', 'bottom'].concat(f.gaps.double ? ['meeting'] : []);
+  return keys.filter(k => { const n = num(f.gaps[k]); return n !== null && !isNaN(n) && n > gapLimit(f, k); });
+}
+function syncGaps(f) {
+  if (f.checks.gaps_seals === 'na') return;
+  const g = f.gaps;
+  const keys = ['head', 'hinge', 'latch', 'bottom'].concat(g.double ? ['meeting'] : []);
+  const complete = keys.every(k => { const n = num(g[k]); return n !== null && !isNaN(n); }) && (g.seals === 'pass' || g.seals === 'fail');
+  if (!complete) return;
+  f.checks.gaps_seals = (gapOver(f).length || g.seals === 'fail') ? 'fail' : 'pass';
+}
+function syncLetterbox(f) {
+  const lb = f.letterbox;
+  if (lb.fitted && [lb.rated, lb.position, lb.condition].includes('fail')) f.checks.ironmongery = 'fail';
+}
+function updateGapUI() {
+  const f = S.form; if (!f) return;
+  const over = gapOver(f);
+  ['head', 'hinge', 'latch', 'bottom', 'meeting'].forEach(k => {
+    const el = document.getElementById('g_' + k), note = document.getElementById('gn_' + k);
+    if (!el || !note) return;
+    const n = num(f.gaps[k]);
+    const isOver = over.includes(k);
+    el.classList.toggle('over', isOver);
+    note.textContent = isOver ? (Math.round((n - gapLimit(f, k)) * 10) / 10) + ' mm over the limit'
+      : (n !== null && isNaN(n) ? 'Enter a number in mm' : '');
+  });
+  document.querySelectorAll('[data-seg="gaps_seals"] button').forEach(b => {
+    b.setAttribute('aria-pressed', f.checks.gaps_seals && b.classList.contains(f.checks.gaps_seals) ? 'true' : 'false');
+  });
+  const sel = document.getElementById('res');
+  if (sel) { sel.value = f.result || ''; sel.className = 'res ' + (f.result === 'Pass' ? 'Pass' : f.result === 'Remedials Needed' ? 'Remedials' : f.result === 'Fail' ? 'Fail' : ''); }
+}
+function suggest(f) {
+  if (f.resultTouched) return;
+  const vals = CHECKS.map(c => f.checks[c.key]);
+  if (vals.some(v => v === 'fail')) f.result = 'Remedials Needed';
+  else if (vals.every(Boolean)) f.result = 'Pass';
+  else f.result = '';
+}
+function validate(f) {
+  if (CHECKS.some(c => !f.checks[c.key])) return 'Answer all 7 checks. The red ones are missing.';
+  if (f.checks.gaps_seals !== 'na') {
+    const g = f.gaps;
+    const keys = ['head', 'hinge', 'latch', 'bottom'].concat(g.double ? ['meeting'] : []);
+    if (keys.some(k => { const n = num(g[k]); return n === null || isNaN(n); })) return 'Enter every gap measurement in mm, or set Gaps / seals to N/A.';
+    if (g.seals !== 'pass' && g.seals !== 'fail') return 'Say whether the seals are present and intact.';
+  }
+  if (f.letterbox.fitted && [f.letterbox.rated, f.letterbox.position, f.letterbox.condition].some(v => v !== 'pass' && v !== 'fail')) return 'Answer all three letterbox checks.';
+  if (!f.result) return 'Choose a result.';
+  if (f.result === 'Pass' && CHECKS.some(c => f.checks[c.key] === 'fail')) return 'A check is marked Fail, so the result cannot be Pass.';
+  if (f.result !== 'Pass' && !f.comments.trim()) return 'Say what action is needed in the comments box.';
+  return '';
+}
+function closeForm(force) {
+  const f = S.form;
+  if (f && !force && (Object.keys(f.checks).length || f.photos.length || f.comments.trim()) && !confirm('Throw away this check?')) return;
+  if (f) f.photos.forEach(p => URL.revokeObjectURL(p.url));
+  S.form = null; S.view = 'doors'; render();
+}
+async function save() {
+  const f = S.form; f.tried = true;
+  syncGaps(f); syncLetterbox(f); suggest(f);
+  const err = validate(f);
+  if (err) { f.error = err; render(); const m = document.querySelector('.check.missing'); if (m) m.scrollIntoView({ block: 'center' }); return; }
+  f.saving = true; f.error = ''; render();
+  const id = uuid();
+  const rec = {
+    id, userId: S.session.user.id, doorId: f.door.id, result: f.result, checks: { ...f.checks },
+    cfNo: f.cfNo.trim(), comments: f.comments.trim(), localDate: todayStr(),
+    gaps: f.checks.gaps_seals === 'na' ? {} : {
+      head: num(f.gaps.head), hinge: num(f.gaps.hinge), latch: num(f.gaps.latch), bottom: num(f.gaps.bottom),
+      meeting: f.gaps.double ? num(f.gaps.meeting) : null, smoke_seals: f.gaps.smoke, seals: f.gaps.seals,
+    },
+    letterbox: f.letterbox.fitted ? { fitted: true, rated: f.letterbox.rated, position: f.letterbox.position, condition: f.letterbox.condition } : { fitted: false },
+    photos: f.photos.map(p => ({ path: 'door-inspections/' + S.building.id + '/' + f.door.id + '/' + id + '/' + uuid() + '.jpg', blob: p.blob })),
+  };
+  let msg = 'Saved';
+  try { await processInspection(rec); }
+  catch (e) {
+    if (isNet(e) || isAuthErr(e)) {
+      try { await qPut(rec); msg = isAuthErr(e) ? 'Saved on this phone. Sign in again to upload it.' : 'No signal. Saved on this phone and will upload by itself.'; }
+      catch (e2) { f.saving = false; f.error = 'Could not save on this phone. Free up some space and try again.'; render(); return; }
+    } else {
+      f.saving = false; f.error = 'Could not save: ' + ((e && e.message) || 'unknown error'); render(); return;
+    }
+  }
+  applyLocalResult(rec);
+  f.photos.forEach(p => URL.revokeObjectURL(p.url));
+  S.form = null; S.view = 'doors';
+  await refreshPending(); window.scrollTo(0, 0); toast(msg);
+}
+
+/* ---------- Views ---------- */
+function topBar(title, sub, left) {
+  return h('div', { class: 'bar' },
+    left || null,
+    h('h1', {}, title, sub ? h('span', { class: 'sub' }, sub) : null),
+    (S.view === 'doors' || S.view === 'buildings') ? h('button', { on: { click: signOut } }, 'Sign out') : null);
+}
+function banner() {
+  if (!S.pending) return null;
+  const txt = S.pending + (S.pending === 1 ? ' check is' : ' checks are') + ' saved on this phone and waiting to upload.';
+  return h('div', { class: 'banner' + (S.queueError ? ' err' : '') },
+    h('span', {}, S.queueError ? txt + ' Last problem: ' + S.queueError : txt),
+    h('button', { disabled: S.flushing, on: { click: flushQueue } }, S.flushing ? 'Uploading…' : 'Upload now'));
+}
+function viewLogin() {
+  const email = h('input', { type: 'email', id: 'em', autocomplete: 'username', inputmode: 'email', autocapitalize: 'none', required: true });
+  const pw = h('input', { type: 'password', id: 'pw', autocomplete: 'current-password', required: true });
+  return h('div', {}, topBar('MIA door checks'),
+    h('form', { class: 'login', on: { submit: e => { e.preventDefault(); signIn(email.value.trim(), pw.value); } } },
+      h('h2', {}, 'Sign in'), h('p', {}, 'Use the email and password the compliance team gave you.'),
+      h('label', { class: 'f', for: 'em' }, 'Email'), email,
+      h('label', { class: 'f', for: 'pw' }, 'Password'), pw,
+      S.loginError ? h('div', { class: 'err-text', role: 'alert' }, S.loginError) : null,
+      h('div', { style: 'height:18px' }),
+      h('button', { class: 'btn', type: 'submit', disabled: S.loginBusy }, S.loginBusy ? 'Signing in…' : 'Sign in')));
+}
+function viewMessage(title, text, withSignOut = true) {
+  return h('div', {}, topBar('MIA door checks'),
+    h('div', { class: 'pad' }, h('h2', {}, title), h('p', {}, text), withSignOut ? h('button', { class: 'btn ghost', on: { click: signOut } }, 'Sign out') : null));
+}
+function viewBuildings() {
+  return h('div', {}, topBar('Choose a building', S.profile.full_name || S.session.user.email), banner(),
+    h('div', { class: 'bld' }, S.buildings.map(b => h('button', { class: 'btn ghost', on: { click: async () => { S.building = b; S.filter = 'todo'; S.q = ''; await loadDoors(); S.view = 'doors'; render(); window.scrollTo(0, 0); } } }, b.name))));
+}
+function viewDoors() {
+  const total = S.doors.length, done = S.doors.filter(doneToday).length;
+  const q = S.q.trim().toLowerCase();
+  let list = S.doors.filter(d => !q || (d.door_reference || '').toLowerCase().includes(q) || (d.location || '').toLowerCase().includes(q));
+  if (S.filter === 'todo') list = list.filter(d => !doneToday(d));
+  else if (S.filter === 'done') list = list.filter(doneToday);
+  const chip = (key, label, n) => h('button', { class: 'chip', 'aria-pressed': S.filter === key ? 'true' : 'false', on: { click: () => { S.filter = key; render(); } } }, label + ' (' + n + ')');
+  const search = h('input', { type: 'search', placeholder: 'Find a door by number or place', value: S.q, 'aria-label': 'Find a door', on: { input: e => { S.q = e.target.value; const pos = e.target.selectionStart; render(); const el = document.querySelector('input[type=search]'); if (el) { el.focus(); try { el.setSelectionRange(pos, pos); } catch (x) {} } } } });
+  const t = todayStr();
+  const rows = list.map(d => {
+    const isDone = doneToday(d);
+    let st, cls = '';
+    if (isDone) { st = 'Done today'; cls = 'done'; }
+    else if (!d.last_inspection_date) { st = 'Not checked yet'; }
+    else if (d.next_due_date && d.next_due_date < t) { st = 'Overdue since ' + fmtDate(d.next_due_date); cls = 'over'; }
+    else { st = 'Checked ' + fmtDate(d.last_inspection_date); }
+    return h('button', { class: 'row' + (isDone ? ' done' : ''), on: { click: () => openForm(d) } },
+      h('span', { class: 'dot ' + (d.rag_status || '') }),
+      h('span', { class: 'main' }, h('div', { class: 'ref' }, d.door_reference), h('div', { class: 'loc' }, d.location || 'No location recorded')),
+      h('span', { class: 'st ' + cls }, st));
+  });
+  return h('div', {}, topBar(S.building.name, S.profile.full_name || S.session.user.email,
+      S.profile.role !== 'building_manager' ? h('button', { 'aria-label': 'Back to buildings', on: { click: () => { S.view = 'buildings'; render(); } } }, 'Back') : null),
+    banner(),
+    h('div', { class: 'progress' }, h('b', {}, done + ' of ' + total), h('span', {}, 'doors checked today')),
+    h('div', { class: 'track' }, h('i', { style: 'width:' + (total ? Math.round(done / total * 100) : 0) + '%' })),
+    h('div', { class: 'tools' }, search, h('div', { class: 'chips' }, chip('todo', 'To do', total - done), chip('done', 'Done today', done), chip('all', 'All', total))),
+    rows.length ? h('div', { class: 'list' }, rows) : h('div', { class: 'empty' }, S.filter === 'todo' && !q ? 'Every door in this building is checked for today.' : 'No doors match.'));
+}
+function pfSeg(label, current, onPick) {
+  return h('div', { class: 'seg two', role: 'group', 'aria-label': label },
+    [['pass', 'Pass'], ['fail', 'Fail']].map(([v, l]) =>
+      h('button', { type: 'button', class: v, 'aria-pressed': current === v ? 'true' : 'false', on: { click: () => onPick(v) } }, l)));
+}
+function gapPanel(f) {
+  const g = f.gaps;
+  const field = (key, label) => h('div', {},
+    h('label', { class: 'gl', for: 'g_' + key }, label + ' (max ' + gapLimit(f, key) + ')'),
+    h('input', { type: 'text', id: 'g_' + key, class: 'gin', inputmode: 'decimal', autocomplete: 'off', value: g[key],
+      on: { input: e => { g[key] = e.target.value; syncGaps(f); suggest(f); updateGapUI(); } } }),
+    h('div', { class: 'gnote', id: 'gn_' + key, 'aria-live': 'polite' }));
+  return h('div', { class: 'gapbox' },
+    h('div', { class: 'hint' }, 'Measure with the door closed, in mm.'),
+    h('div', { class: 'gapgrid' }, field('head', 'Head'), field('bottom', 'Bottom'), field('hinge', 'Hinge side'), field('latch', 'Latch side'), g.double ? field('meeting', 'Meeting gap') : null),
+    h('label', { class: 'tick' }, h('input', { type: 'checkbox', checked: g.smoke, on: { change: e => { g.smoke = e.target.checked; syncGaps(f); suggest(f); render(); } } }), 'Smoke seals fitted (bottom max ' + LIM.bottomSmoke + ')'),
+    h('label', { class: 'tick' }, h('input', { type: 'checkbox', checked: g.double, on: { change: e => { g.double = e.target.checked; render(); } } }), 'Double door (add meeting gap)'),
+    h('div', { class: 'sublabel' }, 'Seals present and intact'),
+    pfSeg('Seals present and intact', g.seals, v => { g.seals = v; syncGaps(f); suggest(f); f.error = ''; render(); }));
+}
+function letterboxPanel(f) {
+  const lb = f.letterbox;
+  const yn = (val, label) => h('button', { type: 'button', class: 'yn', 'aria-pressed': lb.fitted === val ? 'true' : 'false',
+    on: { click: () => { lb.fitted = val; if (!val) { lb.rated = ''; lb.position = ''; lb.condition = ''; } syncLetterbox(f); suggest(f); f.error = ''; render(); } } }, label);
+  const field = (key, label) => h('div', {}, h('div', { class: 'sublabel' }, label), pfSeg(label, lb[key], v => { lb[key] = v; syncLetterbox(f); suggest(f); f.error = ''; render(); }));
+  const anyFail = [lb.rated, lb.position, lb.condition].includes('fail');
+  return h('div', { class: 'lbbox' },
+    h('div', { class: 'sublabel' }, 'Letterbox fitted?'),
+    h('div', { class: 'seg two', role: 'group', 'aria-label': 'Letterbox fitted' }, yn(true, 'Yes'), yn(false, 'No')),
+    lb.fitted ? h('div', { class: 'lbfields' },
+      field('rated', 'Fire-rated, with intumescent liner'),
+      field('position', 'In the lower third of the door'),
+      field('condition', 'Flap and plate in good condition'),
+      anyFail ? h('div', { class: 'gnote on' }, 'A letterbox fail marks Ironmongery as Fail.') : null) : null);
+}
+function viewForm() {
+  const f = S.form, d = f.door;
+  const seg = c => h('div', { class: 'seg', role: 'group', 'aria-label': c.label, 'data-seg': c.key },
+    [['pass', 'Pass'], ['fail', 'Fail'], ['na', 'N/A']].map(([v, l]) =>
+      h('button', { type: 'button', class: v, 'aria-pressed': f.checks[c.key] === v ? 'true' : 'false',
+        on: { click: () => { f.checks[c.key] = v; suggest(f); f.error = ''; render(); } } }, l)));
+  const checkRows = [];
+  CHECKS.forEach(c => {
+    let extra = null;
+    if (c.key === 'gaps_seals' && f.checks.gaps_seals !== 'na') extra = gapPanel(f);
+    if (c.key === 'ironmongery') extra = letterboxPanel(f);
+    checkRows.push(h('div', { class: 'check' + (f.tried && !f.checks[c.key] ? ' missing' : '') }, h('div', { class: 'name' }, c.label), seg(c), extra));
+    if (c.key === 'cert') {
+      checkRows.push(h('div', { class: 'check' },
+        h('label', { class: 'name', for: 'cf', style: 'display:block' }, '1B. CF No (label on top of door)'),
+        h('input', { type: 'text', id: 'cf', value: f.cfNo, autocapitalize: 'characters', autocomplete: 'off', on: { input: e => { f.cfNo = e.target.value; } } })));
+    }
+  });
+  const resCls = f.result === 'Pass' ? 'Pass' : f.result === 'Remedials Needed' ? 'Remedials' : f.result === 'Fail' ? 'Fail' : '';
+  const select = h('select', { id: 'res', class: 'res ' + resCls, on: { change: e => { f.result = e.target.value; f.resultTouched = true; f.error = ''; render(); } } },
+    h('option', { value: '', selected: !f.result }, 'Choose result'),
+    RESULTS.map(r => h('option', { value: r, selected: f.result === r }, r)));
+  const thumbs = f.photos.map(p => h('div', { class: 'ph' }, h('img', { src: p.url, alt: 'Photo of door' }),
+    h('button', { type: 'button', 'aria-label': 'Remove photo', on: { click: () => { URL.revokeObjectURL(p.url); f.photos = f.photos.filter(x => x.id !== p.id); render(); } } }, '×')));
+  const last = d.last_inspection_date ? 'Last check: ' + (d.result || 'no result') + ' on ' + fmtDate(d.last_inspection_date) : 'No check recorded yet';
+  return h('div', {},
+    topBar('Door check', S.building.name, h('button', { 'aria-label': 'Back to door list', on: { click: () => closeForm(false) } }, 'Back')),
+    h('div', { class: 'door-head' }, h('div', { class: 'ref' }, d.door_reference), h('div', { class: 'loc' }, d.location || 'No location recorded'), h('div', { class: 'last' }, last)),
+    h('div', { class: 'quick' }, h('button', { type: 'button', on: { click: () => { CHECKS.forEach(c => { f.checks[c.key] = 'pass'; }); suggest(f); f.error = ''; render(); } } }, 'Everything is OK')),
+    h('div', { class: 'checks' }, checkRows),
+    h('div', { class: 'section' },
+      h('label', { class: 'f', for: 'res' }, 'Result'), select,
+      h('label', { class: 'f', for: 'cm' }, 'Comments / actions required'),
+      h('textarea', { id: 'cm', value: f.comments, placeholder: f.result && f.result !== 'Pass' ? 'What needs doing?' : 'Optional', on: { input: e => { f.comments = e.target.value; } } }),
+      h('div', { class: 'f' }, 'Photos'),
+      h('div', { class: 'photo-btns' },
+        h('button', { type: 'button', class: 'btn', on: { click: () => document.getElementById('cam').click() } }, 'Take photo'),
+        h('button', { type: 'button', class: 'btn ghost', on: { click: () => document.getElementById('gal').click() } }, 'From gallery')),
+      thumbs.length ? h('div', { class: 'photos' }, thumbs) : null),
+    h('div', { class: 'savebar' }, h('div', { class: 'in' },
+      f.error ? h('div', { class: 'err-text', role: 'alert' }, f.error) : null,
+      h('button', { class: 'btn', disabled: f.saving, on: { click: save } }, f.saving ? 'Saving…' : 'Save check'))));
+}
+
+function render() {
+  const y = window.scrollY, same = S._v === S.view;
+  let el;
+  switch (S.view) {
+    case 'login': el = viewLogin(); break;
+    case 'buildings': el = viewBuildings(); break;
+    case 'doors': el = viewDoors(); break;
+    case 'form': el = viewForm(); break;
+    case 'noprofile': el = viewMessage('No access yet', 'Your account has no profile. Ask the compliance team to set it up.'); break;
+    case 'nobuilding': el = viewMessage('No building set', 'Your account is not linked to a building yet. Ask the compliance team to fix this.'); break;
+    case 'readonly': el = viewMessage('View only', 'Your account can view records but cannot submit door checks.'); break;
+    default: el = h('div', { class: 'pad' }, 'Loading…');
+  }
+  app.replaceChildren(el);
+  if (S.toast) app.append(h('div', { class: 'toast', role: 'status' }, S.toast));
+  if (S.view === 'form') updateGapUI();
+  window.scrollTo(0, same ? y : 0);
+  S._v = S.view;
+}
+
+/* ---------- Start ---------- */
+window.addEventListener('online', () => { if (S.session) flushQueue(); });
+(async function boot() {
+  render();
+  try {
+    const { data } = await sb.auth.getSession();
+    S.session = data.session;
+    if (S.session) await afterLogin(); else S.view = 'login';
+  } catch (e) { S.view = S.session ? 'noprofile' : 'login'; }
+  render();
+})();
+sb.auth.onAuthStateChange((ev, session) => { S.session = session; if (ev === 'SIGNED_OUT' && S.view !== 'login') setTimeout(() => { S.view = 'login'; render(); }, 0); });
+})();
+</script>
+</body>
+</html>
